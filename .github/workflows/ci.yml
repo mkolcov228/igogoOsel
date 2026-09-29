@@ -2,12 +2,13 @@ name: CI Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: ['**']
   pull_request:
-    branches: [ main, develop ]
+    branches: ['**']
 
 jobs:
   lint:
+    name: Code Quality Check
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -26,3 +27,20 @@ jobs:
       - name: Run linter (flake8)
         run: |
           flake8 src/
+
+  security_check:
+    name: Security Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Scan for secrets (passwords / keys)
+        run: |
+          echo 'Scanning codebase for sensitive patterns...'
+          if grep -Eri '(password|key=)' . --exclude-dir={.git,.github}; then
+            echo 'ERROR: Potential secret or sensitive key found in codebase!'
+            exit 1
+          else
+            echo 'No secrets detected. Security check passed.'
+          fi
